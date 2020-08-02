@@ -167,7 +167,6 @@ public class MainActivity extends AppCompatActivity {
             try
             {
                 btSocket.close();
-                msg("Disconnected");
             }
             catch (IOException e) {
                 msg("Error");
@@ -177,10 +176,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void connect(){
-        myBluetooth = null;
-        btSocket = null;
-        isBtConnected = false;
-        doneChecking = false;
+        disconnect();
         new ConnectBT().execute();
     }
 

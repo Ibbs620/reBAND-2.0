@@ -36,15 +36,16 @@ public class HomeFragment extends Fragment {
         btBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                new Status().execute();
                 switch(btBtn.getText().toString()){
                     case "Disconnect":
                         mainActivity.disconnect();
                         btBtn.setText("Reconnect");
                         statusText.setTextColor(Color.RED);
                         statusText.setText("Not Connected");
+                        mainActivity.msg("Disconnected");
                         break;
                     case "Reconnect":
-                        new Status().execute();
                         mainActivity.connect();
                         break;
                     case "Pair Device":
@@ -76,7 +77,6 @@ public class HomeFragment extends Fragment {
                 statusText.setTextColor(Color.RED);
                 btBtn.setText("Reconnect");
             }
-            mainActivity.msg(result);
         }
     }
 }
