@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
@@ -36,27 +37,28 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         BottomNavigationView navView = findViewById(R.id.nav_view);
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_notifications)
                 .build();
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(navView, navController);
+
         sp = getSharedPreferences(prefFile, MODE_PRIVATE);
         SharedPreferences.Editor prefEditor = sp.edit();
-        Intent newint = getIntent();
+        Intent devicelist = getIntent();
         address = sp.getString("ADDRESS", "");
-        prefEditor.putString("msg", "Hello");
 
-        if (newint.hasExtra(DeviceList.EXTRA_ADDRESS)) {
-            address = newint.getStringExtra(DeviceList.EXTRA_ADDRESS);
+        if (devicelist.hasExtra(DeviceList.EXTRA_ADDRESS)) {
+            address = devicelist.getStringExtra(DeviceList.EXTRA_ADDRESS);
+            prefEditor.putString("ADDRESS", address);
+            prefEditor.apply();
         } else if (address == "") {
             Intent i = new Intent(MainActivity.this, DeviceList.class);
             startActivity(i);
+        } else {
+            new ConnectBT().execute();
         }
-        connect();
     }
 
     @Override
@@ -69,6 +71,8 @@ public class MainActivity extends AppCompatActivity {
 
     public void headExtension(View view) {
         Intent i = new Intent(MainActivity.this, Exercise.class);
+        i.putExtra("TYPE", "A");
+        i.putExtra("ADDRESS", address);
         startActivity(i);
     }
 
@@ -122,7 +126,10 @@ public class MainActivity extends AppCompatActivity {
 
     public String giveStatus(){
         if (address == "") return "NO DEVICE PAIRED";
-        if(isBtConnected) return "Connected";
+        if(btSocket != null) {
+            if(btSocket.isConnected()) return "Connected";
+            return "Not Connected";
+        }
         return "Not Connected";
     }
 
@@ -156,28 +163,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void connectDevice() {
+    public void pairDevice() {
         Intent i = new Intent(MainActivity.this, DeviceList.class);
         startActivity(i);
-    }
-
-    public void disconnect() {
-        if (btSocket!=null)
-        {
-            try
-            {
-                btSocket.close();
-            }
-            catch (IOException e) {
-                msg("Error");
-            }
-            isBtConnected = false;
-        }
-    }
-
-    public void connect(){
-        disconnect();
-        new ConnectBT().execute();
     }
 
     private class ConnectBT extends AsyncTask<Void, Void, Void>  // UI thread
@@ -195,7 +183,7 @@ public class MainActivity extends AppCompatActivity {
         protected Void doInBackground(Void... devices) //while the progress dialog is shown, the connection is done in background
         {
             try {
-                if (btSocket == null && isBtConnected == false)
+                if (btSocket == null || !btSocket.isConnected())
                 {
                     myBluetooth = BluetoothAdapter.getDefaultAdapter();//get the mobile bluetooth device
                     BluetoothDevice dispositivo = myBluetooth.getRemoteDevice(address);//connects to the device's address and checks if it's available
@@ -220,7 +208,7 @@ public class MainActivity extends AppCompatActivity {
             }
             else
             {
-                msg("Connected.");
+                msg("Connected");
                 isBtConnected = true;
             }
             progress.dismiss();

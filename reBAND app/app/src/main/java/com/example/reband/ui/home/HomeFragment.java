@@ -18,7 +18,7 @@ import com.example.reband.R;
 public class HomeFragment extends Fragment {
     boolean connected;
     MainActivity mainActivity;
-    Button btBtn;
+    Button pair;
     private String text;
     private TextView statusText, addressText;
 
@@ -27,31 +27,15 @@ public class HomeFragment extends Fragment {
 
         statusText = root.findViewById(R.id.status_text);
         addressText = root.findViewById(R.id.id_text);
-        mainActivity = (MainActivity)getActivity();
-        btBtn = root.findViewById(R.id.bt_button);
+        mainActivity = (MainActivity) getActivity();
+        pair = root.findViewById(R.id.pairBtn);
 
         statusText.setText(mainActivity.giveStatus());
         new Status().execute();
-
-        btBtn.setOnClickListener(new View.OnClickListener() {
+        pair.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new Status().execute();
-                switch(btBtn.getText().toString()){
-                    case "Disconnect":
-                        mainActivity.disconnect();
-                        btBtn.setText("Reconnect");
-                        statusText.setTextColor(Color.RED);
-                        statusText.setText("Not Connected");
-                        mainActivity.msg("Disconnected");
-                        break;
-                    case "Reconnect":
-                        mainActivity.connect();
-                        break;
-                    case "Pair Device":
-                        mainActivity.connectDevice();;
-                        break;
-                }
+                mainActivity.pairDevice();
             }
         });
         return root;
@@ -61,22 +45,17 @@ public class HomeFragment extends Fragment {
 
         @Override
         protected String doInBackground(Void... voids) {
-            while(!mainActivity.doneChecking){}
+            while (!mainActivity.doneChecking){}
             return mainActivity.giveStatus();
         }
+
         @Override
-        protected void onPostExecute(String result){
+        protected void onPostExecute(String result) {
             super.onPostExecute(result);
             statusText.setText(result);
+            if(result == "Connected") statusText.setTextColor(Color.GREEN);
+            else statusText.setTextColor(Color.RED);
             addressText.setText(mainActivity.giveAddress());
-            if(result == "Connected") {
-                statusText.setTextColor(Color.GREEN);
-                btBtn.setText("Disconnect");
-            }
-            else {
-                statusText.setTextColor(Color.RED);
-                btBtn.setText("Reconnect");
-            }
         }
     }
 }

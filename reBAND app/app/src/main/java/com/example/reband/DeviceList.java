@@ -83,13 +83,13 @@ public class DeviceList extends AppCompatActivity {
             // Get the device MAC address, the last 17 chars in the View
             String info = ((TextView) v).getText().toString();
             String address = info.substring(info.length() - 17);
-
             // Make an intent to start next activity.
             Intent i = new Intent(DeviceList.this, MainActivity.class);
 
             //Change the activity.
             i.putExtra(EXTRA_ADDRESS, address); //this will be received at ledControl (class) Activity
             startActivity(i);
+
         }
     };
 }
