@@ -5,8 +5,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,7 +31,42 @@ public class Exercise extends AppCompatActivity {
         topText = (TextView)findViewById(R.id.top_text);
         bottomText = (TextView)findViewById(R.id.bottom_text);
         value = (TextView)findViewById(R.id.value);
+        final Intent i = getIntent();
+        address = i.getStringExtra("ADDRESS");
 
+        new CountDownTimer(6000, 1000){
+            public void onTick(long millisUntilFinished){
+                value.setText(Long.toString(millisUntilFinished/1000));
+            }
+            public void onFinish() {
+                switch(i.getStringExtra("TYPE")){
+                    case "A":
+                        headExtension();
+                        break;
+                    case "B":
+                        headFlexion();
+                        break;
+                    case "C":
+                        lateralFlexion();
+                        break;
+                    case "D":
+                        random();
+                        break;
+                }
+            }
+        }.start();
+    }
+
+    private void random() {
+    }
+
+    private void headExtension() {
+    }
+
+    private void headFlexion(){
+    }
+
+    private void lateralFlexion(){
     }
 
     public void msg(String msg){
