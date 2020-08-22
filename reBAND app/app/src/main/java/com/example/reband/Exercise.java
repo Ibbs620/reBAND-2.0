@@ -9,6 +9,8 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.Handler;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -18,11 +20,11 @@ import java.util.UUID;
 public class Exercise extends AppCompatActivity {
 
     String address;
-    BluetoothAdapter myBluetooth = null;
-    BluetoothSocket btSocket = null;
+    BluetoothSocket btSocket = Headset.getInstance().getCurrentBluetoothConnection();
     static final UUID myUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private boolean isBtConnected = false;
     TextView topText, bottomText, value;
+    int X, Y;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,6 +35,8 @@ public class Exercise extends AppCompatActivity {
         value = (TextView)findViewById(R.id.value);
         final Intent i = getIntent();
         address = i.getStringExtra("ADDRESS");
+        if(btSocket == null) msg("no");
+        else msg("yes");
 
         new CountDownTimer(6000, 1000){
             public void onTick(long millisUntilFinished){
@@ -55,18 +59,43 @@ public class Exercise extends AppCompatActivity {
                 }
             }
         }.start();
+        value.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                readX();
+            }
+        });
     }
 
     private void random() {
     }
 
     private void headExtension() {
+        topText.setText("Lift your head until the number hits 0");
+        topText.setTextSize(24);
+        final Handler h = new Handler();
+        final int delay = 10;
+        h.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                value.setText(String.valueOf(readX()));
+                h.postDelayed(this, delay);
+            }
+        }, delay);
     }
 
     private void headFlexion(){
     }
 
     private void lateralFlexion(){
+    }
+
+    private int readX(){
+        write("A");
+        String sent = read();
+        if(sent != "") X = Integer.parseInt(sent);
+        else X = 100;
+        return X;
     }
 
     public void msg(String msg){
@@ -85,20 +114,21 @@ public class Exercise extends AppCompatActivity {
     }
 
     public String read(){
-        String received = "";
-        if(btSocket != null) {
-            try {
-                byte[] b = new byte[3];
-                btSocket.getInputStream().read(b, 0, 1);
-                received = new String(b);
-                btSocket.getInputStream().read();
-                btSocket.getInputStream().read();
-                return received;
-            } catch(IOException e){
-                msg("Error");
+        String recieved = "";
+        try {
+            if(btSocket != null && btSocket.getInputStream().available() > 0) {
+                try {
+                    byte[] b = new byte[1000];
+                    btSocket.getInputStream().read(b);
+                    recieved = new String(b);
+                } catch(IOException e){
+                    msg("Error");
+                }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        return received;
+        return recieved;
     }
 
     public void write(String msg){
@@ -106,47 +136,6 @@ public class Exercise extends AppCompatActivity {
             btSocket.getOutputStream().write(msg.getBytes());
         } catch (IOException e) {
             msg("Error");
-        }
-    }
-
-    private class ConnectBT extends AsyncTask<Void, Void, Void>  // UI thread
-    {
-        private boolean ConnectSuccess = true; //if it's here, it's almost connected
-
-        @Override
-        protected Void doInBackground(Void... devices) //while the progress dialog is shown, the connection is done in background
-        {
-            try
-            {
-                if (btSocket == null || !isBtConnected)
-                {
-                    myBluetooth = BluetoothAdapter.getDefaultAdapter();//get the mobile bluetooth device
-                    BluetoothDevice dispositivo = myBluetooth.getRemoteDevice(address);//connects to the device's address and checks if it's available
-                    btSocket = dispositivo.createInsecureRfcommSocketToServiceRecord(myUUID);//create a RFCOMM (SPP) connection
-                    BluetoothAdapter.getDefaultAdapter().cancelDiscovery();
-                    btSocket.connect();//start connection
-                }
-            }
-            catch (IOException e)
-            {
-                ConnectSuccess = false;//if the try failed, you can check the exception here
-            }
-            return null;
-        }
-        @Override
-        protected void onPostExecute(Void result) //after the doInBackground, it checks if everything went fine
-        {
-            super.onPostExecute(result);
-
-            if (!ConnectSuccess)
-            {
-                msg("Connection Failed. Is it a SPP Bluetooth? Try again.");
-            }
-            else
-            {
-                msg("Connected.");
-                isBtConnected = true;
-            }
         }
     }
 }

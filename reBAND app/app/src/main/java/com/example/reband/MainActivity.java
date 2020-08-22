@@ -10,6 +10,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Toast;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,9 +21,10 @@ import androidx.navigation.ui.NavigationUI;
 import java.io.IOException;
 import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity{
 
     String address;
+    Headset headset;
     public BluetoothAdapter myBluetooth = null;
     public BluetoothSocket btSocket = null;
     static final UUID myUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
@@ -34,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        setTheme(R.style.AppTheme2);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         BottomNavigationView navView = findViewById(R.id.nav_view);
@@ -53,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
             address = devicelist.getStringExtra(DeviceList.EXTRA_ADDRESS);
             prefEditor.putString("ADDRESS", address);
             prefEditor.apply();
+            new ConnectBT().execute();
         } else if (address == "") {
             Intent i = new Intent(MainActivity.this, DeviceList.class);
             startActivity(i);
@@ -142,11 +146,9 @@ public class MainActivity extends AppCompatActivity {
         String received = "";
         if(btSocket != null) {
             try {
-                byte[] b = new byte[3];
-                btSocket.getInputStream().read(b, 0, 1);
+                byte[] b = new byte[6];
+                btSocket.getInputStream().read(b);
                 received = new String(b);
-                btSocket.getInputStream().read();
-                btSocket.getInputStream().read();
                 return received;
             } catch(IOException e){
                 msg("Error");
@@ -186,8 +188,8 @@ public class MainActivity extends AppCompatActivity {
                 if (btSocket == null || !btSocket.isConnected())
                 {
                     myBluetooth = BluetoothAdapter.getDefaultAdapter();//get the mobile bluetooth device
-                    BluetoothDevice dispositivo = myBluetooth.getRemoteDevice(address);//connects to the device's address and checks if it's available
-                    btSocket = dispositivo.createInsecureRfcommSocketToServiceRecord(myUUID);//create a RFCOMM (SPP) connection
+                    BluetoothDevice device = myBluetooth.getRemoteDevice(address);//connects to the device's address and checks if it's available
+                    btSocket = device.createInsecureRfcommSocketToServiceRecord(myUUID);//create a RFCOMM (SPP) connection
                     BluetoothAdapter.getDefaultAdapter().cancelDiscovery();
                     btSocket.connect();//start connection
                 }
@@ -210,6 +212,7 @@ public class MainActivity extends AppCompatActivity {
             {
                 msg("Connected");
                 isBtConnected = true;
+                Headset.getInstance().setupBluetoothConnection(btSocket);
             }
             progress.dismiss();
             doneChecking = true;
