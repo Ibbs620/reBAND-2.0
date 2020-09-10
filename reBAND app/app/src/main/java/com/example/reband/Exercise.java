@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.icu.text.StringPrepParseException;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -19,32 +20,30 @@ import java.util.UUID;
 
 public class Exercise extends AppCompatActivity {
 
-    String address;
     BluetoothSocket btSocket = Headset.getInstance().getCurrentBluetoothConnection();
-    static final UUID myUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-    private boolean isBtConnected = false;
     TextView topText, bottomText, value;
     int X, Y;
+    Handler handler;
+    private boolean running = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_exercise);
-        topText = (TextView)findViewById(R.id.top_text);
-        bottomText = (TextView)findViewById(R.id.bottom_text);
-        value = (TextView)findViewById(R.id.value);
-        final Intent i = getIntent();
-        address = i.getStringExtra("ADDRESS");
+        topText = findViewById(R.id.top_text);
+        bottomText = findViewById(R.id.bottom_text);
+        value = findViewById(R.id.value);
         if(btSocket == null) msg("no");
         else msg("yes");
-
         new CountDownTimer(6000, 1000){
             public void onTick(long millisUntilFinished){
                 value.setText(Long.toString(millisUntilFinished/1000));
             }
             public void onFinish() {
+                Intent i = getIntent();
                 switch(i.getStringExtra("TYPE")){
                     case "A":
+                        write("A");
                         headExtension();
                         break;
                     case "B":
@@ -62,7 +61,7 @@ public class Exercise extends AppCompatActivity {
         value.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                readX();
+                value.setText(String.valueOf(readX()));
             }
         });
     }
@@ -73,17 +72,27 @@ public class Exercise extends AppCompatActivity {
     private void headExtension() {
         topText.setText("Lift your head until the number hits 0");
         topText.setTextSize(24);
-        final Handler h = new Handler();
-        final int delay = 10;
-        h.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                value.setText(String.valueOf(readX()));
-                h.postDelayed(this, delay);
+        handler = new Handler();
+        running = true;
+        handler.postDelayed(new Runnable(){
+            public void run(){
+                readX();
+                if(X < 20000 && X  > -20000){
+                    if(X > 14000){
+                        X = 0;
+                    } else {
+                        X = Math.abs(X - 14000) / 140;
+                    }
+                    value.setText(String.valueOf(X));
+                }
+                handler.postDelayed(this, 100);
             }
-        }, delay);
+        }, 100);
     }
-
+    protected void onStop() {
+        super.onStop();
+        running = false;
+    }
     private void headFlexion(){
     }
 
@@ -92,9 +101,11 @@ public class Exercise extends AppCompatActivity {
 
     private int readX(){
         write("A");
-        String sent = read();
-        if(sent != "") X = Integer.parseInt(sent);
-        else X = 100;
+        try {
+            X = Integer.parseInt(read());
+        } catch (NumberFormatException|StringIndexOutOfBoundsException ex){
+            X = 0;
+        }
         return X;
     }
 
@@ -114,21 +125,15 @@ public class Exercise extends AppCompatActivity {
     }
 
     public String read(){
-        String recieved = "";
+        String received = "Error";
+        byte[] b = new byte[256];
         try {
-            if(btSocket != null && btSocket.getInputStream().available() > 0) {
-                try {
-                    byte[] b = new byte[1000];
-                    btSocket.getInputStream().read(b);
-                    recieved = new String(b);
-                } catch(IOException e){
-                    msg("Error");
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+            int l = btSocket.getInputStream().read(b);
+            received = new String(b, 0, l);
+        } catch(IOException e){
+            msg("error");
         }
-        return recieved;
+        return received;
     }
 
     public void write(String msg){
@@ -138,4 +143,6 @@ public class Exercise extends AppCompatActivity {
             msg("Error");
         }
     }
+
+
 }
