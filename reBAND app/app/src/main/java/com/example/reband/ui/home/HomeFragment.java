@@ -29,8 +29,6 @@ public class HomeFragment extends Fragment {
         addressText = root.findViewById(R.id.id_text);
         mainActivity = (MainActivity) getActivity();
         pair = root.findViewById(R.id.pairBtn);
-
-        statusText.setText(mainActivity.giveStatus());
         new Status().execute();
         pair.setOnClickListener(new View.OnClickListener() {
             @Override

@@ -66,6 +66,18 @@ public class MainActivity extends AppCompatActivity{
     }
 
     @Override
+    protected void onDestroy(){
+        super.onDestroy();
+        try {
+            btSocket.close();
+            btSocket.getInputStream().close();
+            btSocket.getOutputStream().close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
     protected void onPause(){
         super.onPause();
         SharedPreferences.Editor prefEditor = sp.edit();
@@ -76,7 +88,6 @@ public class MainActivity extends AppCompatActivity{
     public void headExtension(View view) {
         Intent i = new Intent(MainActivity.this, Exercise.class);
         i.putExtra("TYPE", "A");
-        i.putExtra("ADDRESS", address);
         startActivity(i);
     }
 
