@@ -35,9 +35,9 @@ public class Exercise extends AppCompatActivity {
         value = findViewById(R.id.value);
         if(btSocket == null) msg("no");
         else msg("yes");
-        new CountDownTimer(6000, 1000){
+        new CountDownTimer(5000, 1000){
             public void onTick(long millisUntilFinished){
-                value.setText(Long.toString(millisUntilFinished/1000));
+                value.setText(Double.toString(Math.ceil(millisUntilFinished/1000)).substring(0,1));
             }
             public void onFinish() {
                 Intent i = getIntent();
@@ -70,20 +70,32 @@ public class Exercise extends AppCompatActivity {
     }
 
     private void headExtension() {
-        topText.setText("Lift your head until the number hits 0");
         topText.setTextSize(24);
+        bottomText.setText("Keep Going!");
         handler = new Handler();
         running = true;
+
         handler.postDelayed(new Runnable(){
+            int time = 0;
             public void run(){
                 readX();
-                if(X < 20000 && X  > -20000){
+                if(X < 20000 && X > -20000){
                     if(X > 14000){
-                        X = 0;
+                        if(time >= 4500){
+                            topText.setText("Now rest your head");
+                        } else {
+                            time += 100;
+                            value.setText("0");
+                            String text = "Now hold your position for " + Math.ceil((4500 - time) / 900);
+                            text = text.substring(0, text.length() - 2);
+                            topText.setText(text);
+                        }
                     } else {
+                        topText.setText("Lift your head until the number hits 0");
                         X = Math.abs(X - 14000) / 140;
+                        value.setText(String.valueOf(X));
+                        time = 0;
                     }
-                    value.setText(String.valueOf(X));
                 }
                 handler.postDelayed(this, 100);
             }
