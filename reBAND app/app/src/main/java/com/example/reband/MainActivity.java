@@ -3,6 +3,7 @@ package com.example.reband;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothHeadset;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -141,9 +142,8 @@ public class MainActivity extends AppCompatActivity{
 
     public String giveStatus(){
         if (address == "") return "NO DEVICE PAIRED";
-        if(btSocket != null) {
-            if(btSocket.isConnected()) return "Connected";
-            return "Not Connected";
+        if(myBluetooth != null && myBluetooth.isEnabled()){
+            return "Connected";
         }
         return "Not Connected";
     }
