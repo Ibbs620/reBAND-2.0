@@ -12,12 +12,18 @@ public class Results extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_results);
-        Intent results = getIntent();
-        int stretchesCompleted = results.getIntExtra("STRETCHES_COMPLETED", 0);
-        long timeElapsed = results.getIntExtra("TIME_ELAPSED", 0);
+
         TextView displayTime = findViewById(R.id.timeElapsed);
         TextView displayStretches = findViewById(R.id.strechesCompleted);
-        displayTime.setText(timeElapsed + "");
+
+        Intent results = getIntent();
+        int stretchesCompleted = results.getIntExtra("STRETCHES_COMPLETED", 0);
+        int timeElapsed = results.getIntExtra("TIME_EXERCISED", 0);
+        String time = timeElapsed / 60000 + ":";
+        if(timeElapsed % 60000 < 10000)  time += "0";
+        time += (timeElapsed % 60000)/1000;
+
+        displayTime.setText(time);
         displayStretches.setText(String.valueOf(stretchesCompleted));
     }
 }
