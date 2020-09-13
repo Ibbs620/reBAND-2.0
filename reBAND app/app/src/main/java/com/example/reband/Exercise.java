@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.graphics.Color;
 import android.icu.text.StringPrepParseException;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -16,6 +17,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.UUID;
 
 public class Exercise extends AppCompatActivity {
@@ -24,7 +27,7 @@ public class Exercise extends AppCompatActivity {
     TextView topText, bottomText, value;
     int X, Y;
     Handler handler;
-    private boolean running = false;
+    private boolean exerciseComplete = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,7 +44,8 @@ public class Exercise extends AppCompatActivity {
             }
             public void onFinish() {
                 Intent i = getIntent();
-                switch(i.getStringExtra("TYPE")){
+                String exerciseID = i.getStringExtra("TYPE");
+                switch(exerciseID){
                     case "A":
                         write("A");
                         headExtension();
@@ -58,12 +62,6 @@ public class Exercise extends AppCompatActivity {
                 }
             }
         }.start();
-        value.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                value.setText(String.valueOf(readX()));
-            }
-        });
     }
 
     private void random() {
@@ -71,27 +69,52 @@ public class Exercise extends AppCompatActivity {
 
     private void headExtension() {
         topText.setTextSize(24);
-        bottomText.setText("Keep Going!");
         handler = new Handler();
-        running = true;
 
         handler.postDelayed(new Runnable(){
             int time = 0;
+            int stretchesDone = 0;
+            int stretchesRequired = 3;
+            boolean finished = false;
             public void run(){
                 readX();
-                if(X < 20000 && X > -20000){
-                    if(X > 14000){
+                bottomText.setText(stretchesRequired - stretchesDone + " stretches left");
+                if(stretchesDone == stretchesRequired){
+                    Intent displayResults = new Intent(Exercise.this, Results.class);
+                    displayResults.putExtra("TIME_EXERCISED", 10);
+                    displayResults.putExtra("STRETCHES_COMPLETED", stretchesDone);
+                    startActivity(displayResults);
+                    handler.removeCallbacks(this);
+                } else if(Math.abs(X) < 20000){
+                    if(finished) {
+                        if(time >= 2700){
+                            finished = false;
+                            time = 0;
+                            stretchesDone++;
+                        } else if(Math.abs(X) < 4000){
+                            time += 100;
+                            String text = "Keep resting for " + Math.ceil((2700 - time) / 900 + 1);
+                            text = text.substring(0, text.length() - 2);
+                            topText.setText(text);
+                        } else {
+                            if(time > 0) msg("Please rest your head before continuing");
+                            time = 0;
+                        }
+                    } else if(X > 14000 || (time % 900 != 0 && time != 0)){
                         if(time >= 4500){
                             topText.setText("Now rest your head");
+                            finished = true;
+                            time = 0;
                         } else {
-                            time += 100;
                             value.setText("0");
-                            String text = "Now hold your position for " + Math.ceil((4500 - time) / 900);
+                            time += 100;
+                            String text = "Now hold your position for " + Math.ceil((4500 - time) / 900 + 1);
                             text = text.substring(0, text.length() - 2);
                             topText.setText(text);
                         }
                     } else {
                         topText.setText("Lift your head until the number hits 0");
+                        if(time > 200) msg("Please try to hold the position");
                         X = Math.abs(X - 14000) / 140;
                         value.setText(String.valueOf(X));
                         time = 0;
@@ -101,14 +124,13 @@ public class Exercise extends AppCompatActivity {
             }
         }, 100);
     }
-    protected void onStop() {
-        super.onStop();
-        running = false;
-    }
+
     private void headFlexion(){
+
     }
 
     private void lateralFlexion(){
+
     }
 
     private int readX(){
