@@ -52,8 +52,10 @@ public class MainActivity extends AppCompatActivity{
         SharedPreferences.Editor prefEditor = sp.edit();
         Intent devicelist = getIntent();
         address = sp.getString("ADDRESS", "");
+        btSocket = Headset.getInstance().getCurrentBluetoothConnection();
+        if (btSocket != null){
 
-        if (devicelist.hasExtra(DeviceList.EXTRA_ADDRESS)) {
+        } else if (devicelist.hasExtra(DeviceList.EXTRA_ADDRESS)) {
             address = devicelist.getStringExtra(DeviceList.EXTRA_ADDRESS);
             prefEditor.putString("ADDRESS", address);
             prefEditor.apply();
